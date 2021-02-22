@@ -131,7 +131,7 @@ for date in dates:
         log_variance = [statistics.pvariance(x) for x in all_prices_ln]  
         single_category_prices["log10_Variance"] = log_variance
     
-           
+        
         report = single_category_prices.drop(pos_names,axis = 1) # a category's prices are still in memory
         
         path = os.path.join(output_directory, category)
