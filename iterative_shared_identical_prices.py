@@ -160,7 +160,6 @@ category_select = category_list
 for category in category_select:
     category_start = time.time()    
     final_rep = [] #list of final report, will be filled with market dataframes
-    markets_in_analysis = []  
     for market in market_dictionary.keys(): 
         
         iterating_market_df = pd.DataFrame()
@@ -268,8 +267,19 @@ for category in category_select:
             print("no pairs in " + market)
     
     final_outer_merge = reduce(lambda left,right: pd.merge(left,right,on='Code',how="outer"),final_rep)
-    # final_outer_merge.to_excel(category +"_"+"identical_prices.xlsx")
-
+    final_outer_merge.to_excel(category +"_"+"identical_prices.xlsx")
+    try:
+        cols = ["Names","Names_x","Names_y"]
+        final_outer_merge["Name"] = final_outer_merge[cols].apply(lambda x: ','.join(x.dropna()), axis=1)  # Join all the names in one column named "Names"
+        final_outer_merge["Name"] = final_outer_merge["Name"].str.split(",").str.get(0) # there will be multiple names, take the first.
+        final_outer_merge.drop(cols,axis="columns",inplace=(True))
+    except KeyError:
+        cols = ["Names_x","Names_y"]
+        final_outer_merge["Name"] = final_outer_merge[cols].apply(lambda x: ','.join(x.dropna()), axis=1)  # Join all the names in one column named "Names"
+        final_outer_merge["Name"] = final_outer_merge["Name"].str.split(",").str.get(0) # there will be multiple names, take the first.
+        final_outer_merge.drop(cols,axis="columns",inplace=(True))
+        market_names = list(final_outer_merge.columns)[1:-2]
+        final_outer_merge =  final_outer_merge[["Name","Code"] + market_names] 
     
     category_end = time.time()    
     print("category evaluated at: " + str(category_end-category_start)+" seconds")
