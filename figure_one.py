@@ -25,12 +25,14 @@ output_path = dir_path+"\\figure1"
 if not os.path.exists(output_path):  # Create output folder if it doesn't exist
     os.mkdir(output_path)
 
-for market in os.listdir(input_directory): 
+market_select = ["oruc"]
+category_select = ["bakliyat-makarna"]
+for market in market_select: # os.listdir(input_directory) 
     
     market_dir = output_path+"\\"+market
     if not os.path.exists(market_dir): #Create a market folder
         os.mkdir(market_dir)
-    for category in category_list:
+    for category in category_select:
         
         # read the data generetad by produce_all_data.py
         category_under_market_directory =  output_path+"\\"+market+"\\"+category
@@ -47,9 +49,11 @@ for market in os.listdir(input_directory):
             product_df_formatted = product_df[product_df.columns[2:]]
             product_df_formatted.set_index("Date",inplace=True)
             product_df_formatted = product_df_formatted.transpose() # product_df_formatted has indices: branch_names, and columns : dates
+            product_df_formatted = np.log(product_df_formatted) # Lets think about
+            mean1 = product_df_formatted.mean(axis = 0).mean()
             
             Z = product_df_formatted.to_numpy() # numpy array version of product_df_formatted, used in graph
-            
+            Z = Z-mean1
             # x and y cannot be string in pcolor, therefore I use their len values as axis
             x = list(product_df_formatted.columns) 
             y = list(product_df_formatted.index)        
@@ -59,13 +63,13 @@ for market in os.listdir(input_directory):
             fig, ax = plt.subplots()
         
             cmap = copy.copy(matplotlib.cm.get_cmap("Blues")) # Colormap is stored here,
-            cmap.set_bad(color='red') # put color red if data is nan
+            cmap.set_bad(color='white') # put color white if data is nan
             
-            c= ax.pcolormesh(x,y,Z,shading= 'nearest',cmap = cmap, vmin=-0.5, vmax=2) # I set values here manually, if you want to see differences better,
+            c= ax.pcolormesh(x,y,Z,shading= 'nearest',cmap = cmap, vmin=-0.30, vmax=0.30) # I set values here manually, if you want to see differences better,
                                                                                       # use vmin = Z.min(), vmax= Z.max()
             fig.colorbar(c, ax = ax) 
             plt.axis("off") # omits the x and y axis from data
             
             
-            fig.savefig(category_under_market_directory+"\\"+product+".png",dpi=None) # save the figure, increase dpi for better quality, but be careful, png size increases
+            fig.savefig(category_under_market_directory+"\\"+product+".png",dpi=200) # save the figure, increase dpi for better quality, but be careful, png size increases
             plt.close()

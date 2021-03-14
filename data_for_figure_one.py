@@ -21,6 +21,7 @@ categories = pd.read_excel("categories.xlsx")
 category_list = list(categories.category)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 output_directory = dir_path+"\\data_for_plots" # Data will be printed out here, on the same folder where code is.
+
 def single_branch_prices(directory,branch_name,date):
     """
     """
@@ -101,7 +102,7 @@ def single_branch_prices_category(directory,branch_name,date,category):
     -------
     df : pd.DataFrame
         The dataframe consists of the products:"Name","Code","price" 
-        and a "Date" column which is the logarithm(10)_of_price_column
+        and a "Date" column which is the logarithm(e)_of_price_column
 
     """    
 
@@ -114,7 +115,8 @@ def single_branch_prices_category(directory,branch_name,date,category):
     df["Price"].replace(to_replace=" TL",value ="",regex = True, inplace = True)
     df["Price"] = df["Price"].astype(float) #format prices as float
     df= df[df['Price'] != 0] # drop 0 prices
-    df[branch_name] = np.log(df["Price"])# LOGN of price column
+    df[branch_name] = df["Price"].copy()# LN of price column
+    
     
     # drop duplicates of the code column, if we don't drop duplicates, merge function goes crazy
     df.drop_duplicates("Code",inplace=True)
@@ -122,11 +124,29 @@ def single_branch_prices_category(directory,branch_name,date,category):
     
     return df[["Name","Code",branch_name]]
             
-
+def get_product(directory,market_dictionary,category,code):
+    product_dataframe = pd.DataFrame()
+    #root_directory = "C:\\Users\\HP\\Desktop\\10"
+    dates = os.listdir(root_directory)
+    for date in dates:
+        for market in market_dictionary.keys():
+            for sube in market_dictionary[market]:
+                str_data = os.join(root_directory,date,sube) + category + ".pkl"
+                df = pd.read_pickle(str_data)
+                product_data = df[df["Code"] == code]
+                product_data["Date"] = date
+                product_data["Market"] = market
+                product_data["Branch"] = sube
+                product_dataframe.append(product_data)
+                        
+    return get_product    
+    
 market_dictionary = markets(root_directory+"\\"+dates[0])
-category_select = category_list
 all_data = pd.DataFrame()
-for market in market_dictionary.keys():# 
+market_select = ["oruc"]
+category_select = ["bakliyat-makarna"]
+
+for market in market_select:
     if len(market_dictionary[market]) > 1:
         if not os.path.exists(output_directory+"\\" +market):
                 os.mkdir(output_directory+"\\" +market)
