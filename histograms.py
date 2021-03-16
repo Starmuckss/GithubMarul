@@ -23,8 +23,8 @@ category_list = list(categories.category)
 
 
 for category in category_list:
-    category_between_path = input_directory+"//"+category +"_"+"between_chain.csv"
-    category_within_path = input_directory+"//"+category +"_"+"within_chain.csv"
+    category_between_path = input_directory+"//"+category +"_"+"between_chain_identical_prices.csv"
+    category_within_path = input_directory+"//"+category +"_"+"within_chain_identical_prices.csv"
     
     if os.path.exists(category_between_path) and os.path.exists(category_between_path): # if both of them exists, we create a Histograms
         between = pd.read_csv(category_between_path) 
@@ -44,5 +44,5 @@ for category in category_list:
         plt.ylabel('Pair Count')
         plt.xlabel('Share of Identical Prices')
         plt.savefig(output_directory+"\\"+category+".png", dpi=200) # change dpi to change picture size
-        plt.close()                
+        # plt.close()                
         

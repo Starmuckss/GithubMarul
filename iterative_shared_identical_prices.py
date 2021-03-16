@@ -115,7 +115,7 @@ def get_category_prices_marketwise(sube_list,directory,category):
 
 market_dictionary = markets(root_directory+"\\"+dates[2]) # burası problemli, pairler günlere göre değişiyor   
 
-category_select = ["sut","peynirler"] 
+category_select = ["cay-kahve-2"] 
 
 
 for category in category_select:
@@ -233,7 +233,7 @@ for category in category_select:
             category_df = iterating_market_df.copy()
         else:
             category_df = category_df.append(iterating_market_df)
-    category_df.to_csv(output_directory+"//"+category +"_"+"within_chain.csv")
+    category_df.to_csv(output_directory+"//"+category +"_"+"within_chain_identical_prices.csv")
     category_end = time.time()    
     print("category evaluated at: " + str(category_end-category_start)+" seconds")
     
