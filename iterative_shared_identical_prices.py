@@ -9,15 +9,20 @@ import pandas as pd
 import os
 import numpy as np
 from functools import reduce
-import statistics
 import time
 from itertools import combinations
 
 root_directory = "C:\\Users\\HP\\Desktop\\10" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
-output_directory = "C:\\Users\\HP\\Desktop\\anadolu10_results" # Data will be printed out here, You have to create this directory before using it.
+dir_path = os.path.dirname(os.path.realpath(__file__))
+output_directory = dir_path + "\\" + "Share_of_identical_prices" # Data will be printed out here, You have to create this directory before using it.
+
+if not os.path.exists(output_directory):
+    os.mkdir(output_directory)
+    
 categories = pd.read_excel("categories.xlsx")
 category_list = list(categories.category)
+
 def check_pairs_daily2(dataframe,pair):
     """
     Find if a pair has shared identical price or not.
@@ -108,58 +113,14 @@ def get_category_prices_marketwise(sube_list,directory,category):
     colums_to_show = ["Names","Code"] + sube_names
     return final_category_dataframe[colums_to_show]   
 
-def get_statistics(market_category_prices):
-    sube_names = market_dictionary[market]
-    market_category_prices['Unique_prices'] = [len(set(v[pd.notna(v)].tolist())) for v in market_category_prices[sube_names].values] # Unique price count is a column now
-    market_category_prices["Number_of_vendors"] = [len(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values] # Total number of subeler who sells the product
-    market_category_prices["Max_price"] = [max(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values]  # Max_price as a column
-    market_category_prices["Min_price"] = [min(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values] # Min_price as a column
-    market_category_prices["Median_price"] = [statistics.median(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values] # Median_price as a column
-    market_category_prices["Mean_price"] = [statistics.mean(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values] # Mean_price as a column
-    market_category_prices["Variance"] = [statistics.pvariance(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values]
-    
-    
-    #Prices of all products a list of lists
-    all_prices_in_category =  [(v[pd.notna(v)].tolist()) for v in market_category_prices[sube_names].values]
-    
-    all_prices_log = [np.log(x) for x in all_prices_in_category] # Bir problem var, nan valueler var sanırım,bunu düzelt
-
-
-    market_category_prices["dominant_price"] = [statistics.mode(x) for x in all_prices_in_category] # multimod'a da bak!
-    vendors_using_dominant_price = [x.count(statistics.mode(x)) for x in all_prices_in_category]
-    vendors_not_using_dominant_price = market_category_prices["Number_of_vendors"] - vendors_using_dominant_price
-    market_category_prices["vendors_not_using_dominant_price"] = vendors_not_using_dominant_price        
-    market_category_prices["unique_p_ratio"] = market_category_prices.Unique_prices / market_category_prices.Number_of_vendors
-    market_category_prices["dispersion_measure"] = (market_category_prices.Max_price-market_category_prices.Min_price) / market_category_prices.Mean_price
-
-    pstdev = [statistics.pstdev(x) for x in all_prices_in_category] # pop stdev for each product        
-    market_category_prices["Stdev/Average"]= pstdev / market_category_prices.Mean_price
-    
-    log_variance = [statistics.pvariance(x) for x in all_prices_log] 
-    market_category_prices["log10_Variance"] = log_variance
-
-
-    report = market_category_prices.drop(sube_names,axis =1)        
-    path = os.path.join(output_directory,market)
-    try:  # report
-    
-        os.mkdir(path)
-    
-        if len(report) !=0: 
-            report.to_pickle(path + "\\" + market + "_" + category + "_" + date +".pkl")      
-    except:
-        if len(report) !=0:     
-            report.to_pickle(path + "\\" + market + "_" + category + "_" + date +".pkl")  
-  
-
-
-
 market_dictionary = markets(root_directory+"\\"+dates[2]) # burası problemli, pairler günlere göre değişiyor   
 
-category_select = category_list 
+category_select = ["cay-kahve-2"] 
+
+
 for category in category_select:
+    category_df = pd.DataFrame()
     category_start = time.time()    
-    final_rep = [] #list of final report, will be filled with market dataframes
     for market in market_dictionary.keys(): 
         
         iterating_market_df = pd.DataFrame()
@@ -232,15 +193,15 @@ for category in category_select:
             
             if len(iterating_market_df) == 0:
                 iterating_market_df = iterating_df_of_a_pair.copy()
-                iterating_market_df["pair_count"] = 1
+                iterating_market_df["pair_count_within"] = 1
             else:
                 iterating_market_df = pd.merge(iterating_market_df, iterating_df_of_a_pair,how= "outer",on="Code")
                 
                 
-                iterating_market_df["pair_count"].fillna(0,inplace=(True))
-                iterating_market_df["pair_count"] += 1
+                iterating_market_df["pair_count_within"].fillna(0,inplace=(True))
+                iterating_market_df["pair_count_within"] += 1
                 
-                iterating_market_df.loc[iterating_market_df['share_of_identical_price_y'].isnull(), 'pair_count'] -= 1
+                iterating_market_df.loc[iterating_market_df['share_of_identical_price_y'].isnull(), 'pair_count_within'] -= 1
                 
                 check_for_nan = iterating_market_df['Names_x'].isnull()
                 iterating_market_df.loc[iterating_market_df['Names_x'].isnull(),"Names_x"] = iterating_market_df["Names_y"].loc[check_for_nan] 
@@ -259,28 +220,20 @@ for category in category_select:
             
             end = time.time()    
             print("pair evaluated at: " + str(end-start)+" seconds") # see how much time it takes to evaluate one pair
-        try:
-            # iterating_market_df = iterating_market_df[iterating_market_df['pair_count'] >= len(list_of_pairs)*0.8] # uncomment to filter pair count
-            iterating_market_df[market] = iterating_market_df["share_of_identical_price"] / iterating_market_df["pair_count"]
-            final_rep.append(iterating_market_df[["Names","Code",market]])
+        try: 
+            # iterating_market_df = iterating_market_df[iterating_market_df['pair_count_within'] >= len(list_of_pairs)*0.8] # uncomment to filter pair count
+            iterating_market_df["Share_of_identical_within"] = iterating_market_df["share_of_identical_price"] / iterating_market_df["pair_count_within"]
+            iterating_market_df["Chain_name"] = market
+            
+            iterating_market_df = iterating_market_df[["Names","Code","Share_of_identical_within","pair_count_within","Chain_name"]]
         except KeyError:
             print("no pairs in " + market)
     
-    final_outer_merge = reduce(lambda left,right: pd.merge(left,right,on='Code',how="outer"),final_rep)
-    final_outer_merge.to_excel(category +"_"+"identical_prices.xlsx")
-    try:
-        cols = ["Names","Names_x","Names_y"]
-        final_outer_merge["Name"] = final_outer_merge[cols].apply(lambda x: ','.join(x.dropna()), axis=1)  # Join all the names in one column named "Names"
-        final_outer_merge["Name"] = final_outer_merge["Name"].str.split(",").str.get(0) # there will be multiple names, take the first.
-        final_outer_merge.drop(cols,axis="columns",inplace=(True))
-    except KeyError:
-        cols = ["Names_x","Names_y"]
-        final_outer_merge["Name"] = final_outer_merge[cols].apply(lambda x: ','.join(x.dropna()), axis=1)  # Join all the names in one column named "Names"
-        final_outer_merge["Name"] = final_outer_merge["Name"].str.split(",").str.get(0) # there will be multiple names, take the first.
-        final_outer_merge.drop(cols,axis="columns",inplace=(True))
-        market_names = list(final_outer_merge.columns)[1:-2]
-        final_outer_merge =  final_outer_merge[["Name","Code"] + market_names] 
-    
+        if len(category_df) == 0:
+            category_df = iterating_market_df.copy()
+        else:
+            category_df = category_df.append(iterating_market_df)
+    category_df.to_csv(output_directory+"//"+category +"_"+"within_chain_identical_prices.csv")
     category_end = time.time()    
     print("category evaluated at: " + str(category_end-category_start)+" seconds")
     
