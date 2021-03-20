@@ -135,8 +135,12 @@ for category in category_select:
         for pair in pairs:  # pairs consists of tuples, make each pair a list.
             list_of_pairs.append([*pair])
             
+        if len(list_of_pairs) == 0:
+            print("no pairs in " + market)
+            continue
+        
         for pair in list_of_pairs:
-            start = time.time()
+            # start = time.time()
             
             iterating_df_of_a_pair = pd.DataFrame()
  
@@ -179,17 +183,13 @@ for category in category_select:
                             iterating_df_of_a_pair.rename(columns = {"Names_x":"Names"},inplace = True)
                             
                     
-                    else:
-                        break
-                else:
-                    break 
-            try:
+            if len(iterating_df_of_a_pair) > 0:
                 #iterating_df_of_a_pair = iterating_df_of_a_pair[iterating_df_of_a_pair['Tot_days'] >= len(dates)*0.8] # uncomment to filter days
                 iterating_df_of_a_pair["share_of_identical_price"] = iterating_df_of_a_pair["indicator"] / iterating_df_of_a_pair["Tot_days"]
                 iterating_df_of_a_pair.drop(labels = ["Tot_days","indicator"],axis=1,inplace=True)
-            except:
-                print("sıkıntıyı bul")
-                break
+            else:
+                continue
+                
             
             if len(iterating_market_df) == 0:
                 iterating_market_df = iterating_df_of_a_pair.copy()
@@ -218,16 +218,16 @@ for category in category_select:
                     
             
             
-            end = time.time()    
-            print("pair evaluated at: " + str(end-start)+" seconds") # see how much time it takes to evaluate one pair
-        try: 
+            # end = time.time()    
+            # print("pair evaluated at: " + str(end-start)+" seconds") # see how much time it takes to evaluate one pair
+        
+        if len(iterating_market_df) > 0: 
             # iterating_market_df = iterating_market_df[iterating_market_df['pair_count_within'] >= len(list_of_pairs)*0.8] # uncomment to filter pair count
             iterating_market_df["Share_of_identical_within"] = iterating_market_df["share_of_identical_price"] / iterating_market_df["pair_count_within"]
             iterating_market_df["Chain_name"] = market
             
             iterating_market_df = iterating_market_df[["Names","Code","Share_of_identical_within","pair_count_within","Chain_name"]]
-        except KeyError:
-            print("no pairs in " + market)
+        
     
         if len(category_df) == 0:
             category_df = iterating_market_df.copy()
