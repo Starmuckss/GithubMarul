@@ -20,7 +20,8 @@ if not os.path.exists(output_directory):
 categories = pd.read_excel("categories.xlsx")
 category_list = list(categories.category)
 
-
+full_within = pd.Series()
+full_between = pd.Series()
 
 for category in category_list:
     category_between_path = input_directory+"//"+category +"_"+"between_chain_identical_prices.csv"
@@ -31,10 +32,16 @@ for category in category_list:
         within = pd.read_csv(category_within_path)
         
         merged = pd.merge(between,within,how="inner",on = ["Code","Chain_name"])
-        within_chain_data = within.Share_of_identical_within
-        between_chain_data = between.Share_of_identical_between
+        within_chain_data = merged.Share_of_identical_within
+        between_chain_data = merged.Share_of_identical_between
         
-            
+        if len(full_within) == 0 and len(full_between) == 0: 
+            full_within = within_chain_data
+            full_between = between_chain_data
+        else:
+            full_within=full_within.append(within_chain_data)
+            full_between=full_between.append(between_chain_data)
+        
         plt.hist(within_chain_data, alpha=0.8, label='within_chain',color="blue") # alpha value is the transperancy value of the bars, increase to make them opaque 
         plt.hist(between_chain_data, alpha=0.8, label='between_chain',color="red")
         
@@ -44,5 +51,13 @@ for category in category_list:
         plt.ylabel('Pair Count')
         plt.xlabel('Share of Identical Prices')
         plt.savefig(output_directory+"\\"+category+".png", dpi=200) # change dpi to change picture size
-        # plt.close()                
-        
+        plt.clf() 
+
+
+plt.hist(full_within, alpha=0.8, label='within_chain',color="blue") # alpha value is the transperancy value of the bars, increase to make them opaque 
+plt.hist(full_between, alpha=0.8, label='between_chain',color="red") # alpha value is the transperancy value of the bars, increase to make them opaque 
+plt.title("Share of Identical Prices for all")
+plt.ylabel('Pair Count')
+plt.xlabel('Share of Identical Prices')
+plt.savefig(output_directory+"\\"+"all"+".png", dpi=200)
+plt.clf()
