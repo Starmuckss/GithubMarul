@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
 
-root_directory = "C:\\Users\\HP\\Desktop\\anadolu10" # root directory contains everything
+root_directory = "C:\\Users\\HP\\Desktop\\11" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
 output_directory = dir_path+"\\log_average" # Data will be printed out here, You have to create this directory before using it.
@@ -70,16 +70,9 @@ def single_branch_prices_category(directory,date):
         
     """    
     # Burada path i modifiye ediyorum. çünkü pairleri sadece bir kere bulmuştum
-    splitted = directory.split("\\")
-    for i in splitted:
-        try:
-            if isinstance(int(i), int):
-                splitted[splitted.index(i)] = date
-                break
-        except ValueError:
-            pass
-    directory = "\\".join(splitted)
-    data_directory = directory
+    # path'de sadece gün kısmını değiştirerek bütün günlerin verisini toplayabiliyorum
+    data_directory = directory[:len(root_directory)+1] + date + directory[len(root_directory) + 3:]
+    
     df = pd.read_pickle(data_directory)
     df.drop(labels = ["Price_old","Link","Date"],axis=1,inplace=True)
     df.dropna(subset=["Name"],inplace=True)
