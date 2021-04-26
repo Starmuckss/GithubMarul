@@ -3,6 +3,7 @@
 Created on Mon Apr 19 15:33:05 2021
 Find average log prices of point of sale data for both between and within. Second metric in Uniform Pricing in US Retail Chains 
 @author: HP
+rename the file: abs_log_prc_diff
 """
 import pandas as pd
 import os
@@ -26,7 +27,8 @@ category_list = list(categories.category)
 def find_distinct_pos(directory):
     """
     Get only one point of sale from redundant point of sales
-    Farkli yerlere satis yapan bakkallari eler
+    Farkli yerlere satis yapan bakkallar icin sadece 1 bolgeye olan satislari tutar
+    boylece her pos bir kere dataya girer
     """
     distinct_pos = {}
     check_distinct  = {}
@@ -42,10 +44,14 @@ def find_distinct_pos(directory):
                         distinct_pos[category] += [(directory+"\\"+direc +"\\"+ category+".pkl")]
                     except:
                         distinct_pos[category] = [(directory+"\\"+direc +"\\"+ category+".pkl")]
+                        # e.g.: 
     return distinct_pos 
 
 def get_pairs(all_pos):
-    
+    """
+    all_pos is a list paths, all_pos is returned by function find_distinct_pos
+    this func returns a dictionary of all pairs of pos (both within and between)  
+    """
     all_pairs = [combinations(pos_category,2) for pos_category in all_pos.values()]
 
     dict_of_pairs = defaultdict(list)
@@ -56,10 +62,11 @@ def get_pairs(all_pos):
 
 def single_branch_prices_category(directory,date):
     """
+    reorganizes the input data (daily) & takes the lof of prices
     Parameters
     ----------
     directory : String
-        directory of where whole data is in the memory.
+        directory of where whole data is in the drive.
     date : String
         The day which data is collected.
     Returns
@@ -90,50 +97,67 @@ def single_branch_prices_category(directory,date):
     return df[["Name","Code",date]]
 
 category_select = ["sut","peynirler","online-meyve-siparisi"] # input categories
-all_pos = find_distinct_pos(root_directory+"\\"+dates[0]) # All pos has keys:categories, values:true paths for each point of sale for that category
+all_pos0 = find_distinct_pos(root_directory+"\\"+dates[0]) # All pos has keys:categories, values:true paths for each point of sale for that category
+all_posM = find_distinct_pos(root_directory+"\\"+dates[ len(dates)//2 ])
+all_posL = find_distinct_pos(root_directory+"\\"+dates[-1])
+
+# merge all_pos0 all_posM all_posL and drop duplicates. The result should be named all_pos
+
+
 dict_of_pairs = get_pairs(all_pos) # pairs 
+
+# BElow in the for loop: we create a panel data (all products in a category & prices observed in several days)
+# than we take average over days
+# calculate the difference of averages, across pairs
 
 for category in category_select:
     start_category = time.time()
+    
+    
+    # first thing is to calculate and store average of log prices and get rid of dates
+    # then use these averages for within and between estimations
+    # use up to 200 pairs   
+    
+    
     # If pair is within, its dataframe will be stored in within, same for between
     # defaultdict is a dictionary with a useful mechanic, when an unknown key is created, It automatically creates an empty value with type entered as parameter
     # helps me to get rid long lines when I try to fill dictionaries with try-except
-    within = defaultdict(list) 
+    within = defaultdict(list)  # there are empty dictionaries
     between = defaultdict(list)
 
-    
     for pair in dict_of_pairs[category]:                 
-        # pair has 2 branches inside, first and second, both empty lists will be populated by daily dataframes
-        first = [] 
-        second = []
+        # pair has 2 branches inside, pos_1 and pos_2, both empty lists will be populated by daily dataframes
+        pos_1 = [] 
+        pos_2 = []
         dates_in_analysis = list()
 
         pair = [*pair]
         try:
             for date in dates:
-                first.append(single_branch_prices_category(pair[0],date)) 
-                second.append(single_branch_prices_category(pair[1],date))
+                pos_1.append(single_branch_prices_category(pair[0],date))   # time-series price data from pos_1 pos of the list
+                pos_2.append(single_branch_prices_category(pair[1],date))
                 dates_in_analysis.append(date)
 
         except FileNotFoundError:
             pass 
         
-        # inner merge first and second, then we will have the products sold by branches EVERYDAY   
+        # BURASI degismeli. inner merge gerek yok. Ama gunlerin yuzde 50 sinden fazla fiyati NaN olan urunu atalim.
+        # inner merge pos_1 and pos_2, then we will have the products sold by branches EVERYDAY   
         if len(dates_in_analysis) > 0:  
-            first_merge = reduce(lambda left,right: pd.merge(left,right,on='Code',how="inner",suffixes=("","_y")),first) # merge inner, yani her günde olan ürünler var!
-            second_merge = reduce(lambda left,right: pd.merge(left,right,on='Code',how="inner",suffixes=("","_y")),second)
+            pos_1_merge = reduce(lambda left,right: pd.merge(left,right,on='Code',how="inner",suffixes=("","_y")),pos_1) # merge inner, yani her günde olan ürünler var!
+            pos_2_merge = reduce(lambda left,right: pd.merge(left,right,on='Code',how="inner",suffixes=("","_y")),pos_2)
         else:
             continue
         
         #drop duplicate columns
-        first_merge = first_merge.loc[:,~first_merge.columns.duplicated()]
-        second_merge = second_merge.loc[:,~second_merge.columns.duplicated()]
+        pos_1_merge = pos_1_merge.loc[:,~pos_1_merge.columns.duplicated()]
+        pos_2_merge = pos_2_merge.loc[:,~pos_2_merge.columns.duplicated()]
         
-        first_merge["Mean_log_price"] = [statistics.mean(v[pd.notna(v)].tolist()) for v in first_merge[dates_in_analysis].values] # Mean_price as a column
-        second_merge["Mean_log_price"] = [statistics.mean(v[pd.notna(v)].tolist()) for v in second_merge[dates_in_analysis].values] # Mean_price as a column
+        pos_1_merge["Mean_log_price"] = [statistics.mean(v[pd.notna(v)].tolist()) for v in pos_1_merge[dates_in_analysis].values] # Mean_price as a column
+        pos_2_merge["Mean_log_price"] = [statistics.mean(v[pd.notna(v)].tolist()) for v in pos_2_merge[dates_in_analysis].values] # Mean_price as a column
    
         # merge the pair.inner merge, both have the products at the end of merge
-        final_merge_for_pair = pd.merge(first_merge[["Name","Code" ,"Mean_log_price"]],right=second_merge[["Name","Code" ,"Mean_log_price"]],on = "Code")
+        final_merge_for_pair = pd.merge(pos_1_merge[["Name","Code" ,"Mean_log_price"]],right=pos_2_merge[["Name","Code" ,"Mean_log_price"]],on = "Code")
         final_merge_for_pair["absolute_difference"] = np.abs(final_merge_for_pair["Mean_log_price_x"] -final_merge_for_pair["Mean_log_price_y"])
         final_merge_for_pair.rename(columns = {"Name_x" : "Name" },inplace = True)
         final_merge_for_pair.drop(axis=1,columns=["Mean_log_price_x","Mean_log_price_y","Name_y"],inplace=True)
