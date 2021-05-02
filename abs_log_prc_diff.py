@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Apr 19 15:33:05 2021
-Find average log prices of point of sale data and take the absolute difference for both between and within. 
+Find average log prices of point of sale data at product level
+ and take the absolute difference with other PoS, for both between and within. 
+ within: PoS from the same chain
+ between: PoS from different chains
 Second metric in Uniform Pricing in US Retail Chains 
 @author: Sefa
 rename the file: abs_log_prc_diff
@@ -18,11 +21,11 @@ from collections import defaultdict
 root_directory = "C:\\Users\\HP\\Desktop\\11" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
-output_directory = dir_path+"\\log_average_abs_difference" # Data will be printed out here
+output_directory = dir_path+"\\abs_log_prc_diff" # Data will be printed out here
 if not os.path.exists(output_directory): # create the folder if not exists already
     os.mkdir(output_directory)
 
-intermediate_output_directory = dir_path + "\\Log_average_for_abs_diff" # Preprocessed data will be recorded here
+intermediate_output_directory = dir_path + "\\temp_abs_log_prc_diff" # Preprocessed data will be recorded here
 if not os.path.exists(intermediate_output_directory): # create the folder if not exists already
     os.mkdir(intermediate_output_directory) 
 
