@@ -12,15 +12,21 @@ from functools import reduce
 import time
 from itertools import combinations
 
-root_directory = "C:\\Users\\HP\\Desktop\\10" # root directory contains everything
+#root_directory = "C:\\Users\\HP\\Desktop\\10" # root directory contains everything
+#dates = os.listdir(root_directory) # Assumed date files are directly under root directory
+#dir_path = os.path.dirname(os.path.realpath(__file__))
+#output_directory = dir_path + "\\" + "Share_of_identical_prices" # Data will be printed out here, You have to create this directory before using it.
+
+
+root_directory = r"D:\moving_files_here_to_there\ist_anadolu\12" # root directory contains everything
+#root_directory = r"C:\Users\mehmeto\Desktop\temp_marul\temp12"
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
-dir_path = os.path.dirname(os.path.realpath(__file__))
-output_directory = dir_path + "\\" + "Share_of_identical_prices" # Data will be printed out here, You have to create this directory before using it.
+output_directory = r"C:\Users\mehmeto\Desktop\temp_marul\results" # Data will be printed out here, You have to create this directory before using it.
 
 if not os.path.exists(output_directory):
     os.mkdir(output_directory)
     
-categories = pd.read_excel("categories.xlsx")
+categories = pd.read_excel("categories_temp.xlsx")
 category_list = list(categories.category)
 
 def check_pairs_daily2(dataframe,pair):
@@ -43,7 +49,7 @@ def check_pairs_daily2(dataframe,pair):
     return df[["Names","Code","indicator"]] # date column has identical shared prices under it
 
 def markets(directory):
-    categories = pd.read_excel("categories.xlsx")
+    categories = pd.read_excel("categories_temp.xlsx")
     category_list = list(categories.category)
     
     market_dictionary = {}
@@ -115,7 +121,8 @@ def get_category_prices_marketwise(sube_list,directory,category):
 
 market_dictionary = markets(root_directory+"\\"+dates[2]) # burası problemli, pairler günlere göre değişiyor   
 
-category_select = ["cay-kahve-2"] 
+#category_select = ["cay-kahve-2"] 
+category_select = category_list
 
 
 for category in category_select:
@@ -184,7 +191,7 @@ for category in category_select:
                             
                     
             if len(iterating_df_of_a_pair) > 0:
-                #iterating_df_of_a_pair = iterating_df_of_a_pair[iterating_df_of_a_pair['Tot_days'] >= len(dates)*0.8] # uncomment to filter days
+                iterating_df_of_a_pair = iterating_df_of_a_pair[iterating_df_of_a_pair['Tot_days'] >= len(dates)*0.5] # uncomment to filter days
                 iterating_df_of_a_pair["share_of_identical_price"] = iterating_df_of_a_pair["indicator"] / iterating_df_of_a_pair["Tot_days"]
                 iterating_df_of_a_pair.drop(labels = ["Tot_days","indicator"],axis=1,inplace=True)
             else:
