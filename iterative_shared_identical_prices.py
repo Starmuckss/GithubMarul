@@ -104,21 +104,23 @@ def get_category_prices_marketwise(sube_list,directory,category):
         final_category_dataframe = reduce(lambda left,right: pd.merge(left,right,on='Code',how="outer"),category_dataframes)    
     except TypeError:
         return failed_merge
-    try:
-        cols = ["Name","Name_x","Name_y"]
-        final_category_dataframe["Names"] = final_category_dataframe[cols].apply(lambda x: ','.join(x.dropna()), axis=1)  # Join all the names in one column named "Names"
-        final_category_dataframe["Names"] = final_category_dataframe["Names"].str.split(",").str.get(0) # there will be multiple names, take the first.
-        final_category_dataframe.drop(cols,axis="columns",inplace=(True)) #Drop all other name columns.
-    
-    except: # For certain categories, the column "Name" drops, only Name_x and Name_y is left.This try-except solves this. 
-        cols = ["Name_x","Name_y"]
-        final_category_dataframe["Names"] = final_category_dataframe[cols].apply(lambda x: ','.join(x.dropna()), axis=1) 
-        final_category_dataframe["Names"] = final_category_dataframe["Names"].str.split(",").str.get(0) 
-        final_category_dataframe.drop(cols,axis="columns",inplace=(True))
+    if len(final_category_dataframe) > 0: # I added this if and else, if final_category_dataframe is empty, dont use string functions
+        try:
+            cols = ["Name","Name_x","Name_y"]
+            final_category_dataframe["Names"] = final_category_dataframe[cols].apply(lambda x: ','.join(x.dropna()), axis=1)  # Join all the names in one column named "Names"
+            final_category_dataframe["Names"] = final_category_dataframe["Names"].str.split(",").str.get(0) # there will be multiple names, take the first.
+            final_category_dataframe.drop(cols,axis="columns",inplace=(True)) #Drop all other name columns.
         
-    colums_to_show = ["Names","Code"] + sube_names
-    return final_category_dataframe[colums_to_show]   
-
+        except: # For certain categories, the column "Name" drops, only Name_x and Name_y is left.This try-except solves this. 
+            cols = ["Name_x","Name_y"]
+            final_category_dataframe["Names"] = final_category_dataframe[cols].apply(lambda x: ','.join(x.dropna()), axis=1) 
+            final_category_dataframe["Names"] = final_category_dataframe["Names"].str.split(",").str.get(0) 
+            final_category_dataframe.drop(cols,axis="columns",inplace=(True))
+            
+        colums_to_show = ["Names","Code"] + sube_names
+        return final_category_dataframe[colums_to_show]   
+    else:
+        return failed_merge
 market_dictionary = markets(root_directory+"\\"+dates[2]) # burası problemli, pairler günlere göre değişiyor   
 
 #category_select = ["cay-kahve-2"] 
