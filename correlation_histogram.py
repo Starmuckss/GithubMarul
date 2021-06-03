@@ -39,9 +39,9 @@ for category in category_list:
         between = between.rename(columns = {'Mean_correlation': 'Mean_correlation_between'}, inplace = False)
         within = within.rename(columns = {'Mean_correlation': 'Mean_correlation_within'}, inplace = False)
         
-        # lower_pair_count_limit = 20
-        # between = between[between["pair_count"]>lower_pair_count_limit]
-        # within = within[within["pair_count"]>lower_pair_count_limit]
+        lower_pair_count_limit = 20
+        between = between[between["pair_count"]>lower_pair_count_limit]
+        within = within[within["pair_count"]>lower_pair_count_limit]
         
         if len(between) == 0 or len(within) == 0: # If one of the between or within is empty, skip to the next category 
             continue 
@@ -67,10 +67,11 @@ for category in category_list:
         # weights = np.ones(len(merged)) / len(merged) creates a numpy array of 1's. then divides the whole array to the length of the data.
         
         plt.legend(loc='upper right')
-        plt.xlim(-1,1) # limit on the x axis # NOTE: on the article, this is set as (0,1) (winsorised)
-        # plt.ylim(0,1)
+        plt.xlim(0,1) # limit on the x axis # NOTE: on the article, this is set as (0,1) (winsorised)
+        # But I don't know that if winsorization omits negative values or squzees them to 0 value.
+        plt.ylim(0,1)
         plt.title('correlation for '+ category)
-        plt.ylabel("y label")
+        plt.ylabel("products in this category: "+str(len(merged)))
         plt.gca().yaxis.set_major_formatter(PercentFormatter(1)) # Formats the y limit to show percentages
         plt.xlabel('correlation')
         plt.savefig(output_directory+"\\"+category+"_.png", dpi=200) # change dpi to change picture size
@@ -78,9 +79,10 @@ for category in category_list:
 plt.hist(full_within, alpha=0.8, label='within_chain',color="blue",weights=np.ones(len(full_within)) / len(full_within),bins=bins) # alpha value is the transperancy value of the bars, increase to make them opaque 
 plt.hist(full_between, alpha=0.8, label='between_chain',color="red",weights=np.ones(len(full_between)) / len(full_between),bins=bins) # alpha value is the transperancy value of the bars, increase to make them opaque 
 plt.legend(loc='upper right')
-plt.title("Correlation for all")
-plt.xlim(-1, 1)
-plt.ylabel('y label')
+plt.title("Correlation for all categories")
+plt.xlim(0, 1)
+plt.ylim(0, 1)
+plt.ylabel("total number of products: "+str(len(full_within)))
 plt.gca().yaxis.set_major_formatter(PercentFormatter(1)) # Formats the y limit to show percentages
 plt.xlabel("Correlation for all")
 plt.savefig(output_directory+"\\"+"all"+"_.png", dpi=200)
