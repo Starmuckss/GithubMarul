@@ -30,7 +30,7 @@ for category in category_list:
     category_between_path = input_directory + "\\" + category + "_between.csv" # Path for data obtained from log_average_abs_difference.py
     category_within_path = input_directory + "\\" + category + "_within.csv" # Path for data obtained from log_average_abs_difference.py
     
-    if os.path.exists(category_between_path) and os.path.exists(category_between_path): # if both of them exists, we create a Histogram
+    if os.path.exists(category_between_path) and os.path.exists(category_within_path): # if both of them exists, we create a Histogram
         between = pd.read_csv(category_between_path) 
         within = pd.read_csv(category_within_path)
         
