@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 19 15:33:05 2021
 Find average log prices of point of sale data at product level (done in pre_abs_log_prc_diff.py)
 and take the absolute difference with other PoS, for different districts (ilçe) 
 Second metric in Uniform Pricing in US Retail Chains@author: HP
@@ -31,10 +30,7 @@ sampled_dict_of_pairs = np.load(input_directory + "\\sampled_dict_of_pairs_for_s
 #%%
 for category in category_select:
     start_category = time.time()
-    # If pair is within, its dataframe will be stored in within, same for between
-    # defaultdict is a dictionary with a useful mechanic, when an unknown key is created, It automatically creates an empty value with type entered as parameter
-    # helps me to get rid long lines when I try to fill dictionaries with try-except
-    district_data_list = defaultdict(list)
+    district_data_list = defaultdict(list) # Data for each district will be stored here
     
     for district in sampled_dict_of_pairs[category]:                 
         for pair in sampled_dict_of_pairs[category][district]:
@@ -84,26 +80,24 @@ for category in category_select:
                 
     
     #Report district data
-    district_df = pd.DataFrame()
+    category_df = pd.DataFrame()
     
-    # NOW IN LONG FORMAT: df.columns = name,code,pair_count,between_abs_difference,chain_name  
-
     for district in district_data_list.keys():
-        if len(district_df) == 0:
-            district_df =  district_data_list[district]
-            district_df["within_abs_difference"] = district_df["absolute_difference"] / district_df["pair_count"] # abs_difference is divided to pair count, reported under chain name
-            district_df.drop(["absolute_difference"],axis =1, inplace = True)
-            district_df["district"] = district
-        else:
-            df = district_data_list[district] 
-            df["within_abs_difference"] = df["absolute_difference"] / df["pair_count"]
-            #within_df = pd.merge(within_df,df[["Code","Name","within_abs_difference"]],on = ["Name","Code"],how = "outer")
-            df.drop(["absolute_difference"],axis =1, inplace = True)
-            df["district"] = district
-            district_df = district_df.append(df)       
+        district_df =  district_data_list[district]
+        district_df[district] =  district_df["absolute_difference"] / district_df["pair_count"]
+        district_df = district_df[["Name","Code",district]]
+        
+        if len(category_df) == 0:
+            category_df =  district_df
+            # abs_difference is divided to pair count, reported under chain name
             
-    district_df.to_csv(output_directory + "\\" + category + "semt.csv" )  # report as csv ex: deodorant-parfum_between.csv
-   
+        else:
+            category_df = pd.merge(category_df,district_df,how="outer")
+            
+    try:
+        category_df[["Name","Code"]+list(district_data_list.keys())].to_pickle(output_directory + "\\" + category + "_semt.pkl" )  # report as csv ex: deodorant-parfum_between.csv
+    except KeyError:
+       continue
     end_category = time.time()
     print( category + " evaluated in: " + str(end_category-start_category) + " seconds")
             
