@@ -37,7 +37,7 @@ istanbul_map['coords'] = [coords[0] for coords in istanbul_map['coords']] # Gene
 
 for category in category_list:
     log_average_difference_data = pd.read_pickle(input_directory + "\\" + category + "_semt.pkl") # Import data here
-    
+
     # Get number columns only
     try: 
         log_average_difference_data.drop(["Name","Code"],axis =1,inplace=True)
