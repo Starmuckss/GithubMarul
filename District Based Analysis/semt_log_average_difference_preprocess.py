@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+Description
+"""
+# -*- coding: utf-8 -*-
 
 """
 Sample and prepare data for finding correlation of prices in the same district (ilçe).
@@ -13,19 +17,23 @@ from collections import defaultdict
 import random
 from functools import reduce
 import time
-
+import statistics
 
 root_directory = "C:\\Users\\HP\\Desktop\\11" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
-output_directory = dir_path + "\\pre_semt_correlation" # Output Data will be saved in here
+output_directory = dir_path + "\\data\\pre_semt_log_average_difference" # Output Data will be saved in here
+
+if not os.path.exists(dir_path + "\\data"): # create the folder if not exists already
+    os.mkdir(dir_path + "\\data")
+    
 if not os.path.exists(output_directory): # create the folder if not exists already
     os.mkdir(output_directory)
 
 categories = pd.read_excel("categories.xlsx")
 category_list = list(categories.category)
 
-semtler = pd.read_excel("semt.xlsx")
+semtler = pd.read_pickle("new_semtler.pkl")
 
 def find_distinct_pos(directory):
     """
@@ -115,6 +123,7 @@ dict_of_pairs = get_pairs(all_pos_total) # pairs
 sampled_dict_of_pairs = defaultdict(list) 
 
 category_select = category_list
+#category_select = ["sut"]
 #Preprocess data
 start_preprocessing = time.time()
 count = 0
@@ -133,8 +142,8 @@ for category in category_select:
         
         # Find the corresponding district from the mahalle code (4970) For ex: if 5000 ----> district: Kadıköy
         try: 
-            pos_semt_1 = semtler.loc[semtler['Location_Code'] == int(pos_location_1), "Name"].item()
-            pos_semt_2 = semtler.loc[semtler['Location_Code'] == int(pos_location_2), "Name"].item()
+            pos_semt_1 = semtler.loc[semtler['Location_Code'] == pos_location_1, "Name"].item()
+            pos_semt_2 = semtler.loc[semtler['Location_Code'] == pos_location_2, "Name"].item()
         
         except ValueError: # If you don't know the mahalle code's corresponding district, count how many missing
             count +=1
@@ -154,15 +163,15 @@ for category in category_select:
     
     sampled_dict_of_pairs[category] = sampled_category_pairs    
 
-for category in sampled_category_pairs.keys():
-    for district in sampled_category_pairs[category]:
-        for pair in sampled_category_pairs[category][district]:
+for category in sampled_dict_of_pairs.keys():
+    for district in sampled_dict_of_pairs[category]:
+        for pair in sampled_dict_of_pairs[category][district]:
             for pos in pair:
                 pos_name = pos[pos.find(dates[0]) + len(dates[0])+1: pos.find(category)-1] # returns cagdas-chain-xxxx
                 chain_name = pos_name.split("-")[0]
-                semt_correlation_directory = output_directory + "\\" + pos_name + "_" + category+ ".pkl"
+                semt_log_average_directory = output_directory + "\\" + pos_name + "_" + category+ ".pkl"
     
-                if not os.path.exists(semt_correlation_directory):
+                if not os.path.exists(semt_log_average_directory):
                     pos_daily = [] # pos_daily will be populated by daily dataframes for that point of sale
                     dates_in_analysis = list() # dates the pos has data in that category
         
@@ -191,15 +200,26 @@ for category in sampled_category_pairs.keys():
                     pos_merge = pos_merge.loc[:,~pos_merge.columns.duplicated()] 
                     
                     pos_merge["Num_days_sold"] = [len(v[pd.notna(v)].tolist()) for v in pos_merge[dates_in_analysis].values] # day count of a particular product sold
+                    pos_merge["Mean_log_price"] = [statistics.mean(v[pd.notna(v)].tolist()) for v in pos_merge[dates_in_analysis].values] # Mean_price as a column
+
                     pos_merge = pos_merge[pos_merge["Num_days_sold"] > len(dates)//2] # take products if product has been sold at least 50% of days
+                    
                     pos_merge.drop(labels = ["Num_days_sold"],inplace=True,axis=1)
                     # Output the preprocessed data
-                    pos_merge.to_pickle(semt_correlation_directory) 
-if len(sampled_category_pairs) > len(np.load(output_directory + "\\sampled_dict_of_pairs_for_correlation.npy",allow_pickle='TRUE').item()):
-    np.save(output_directory + "\\sampled_dict_of_pairs_for_correlation.npy",sampled_category_pairs)         
+                    pos_merge.to_pickle(semt_log_average_directory) 
+                    pos_merge[["Name","Code" ,"Mean_log_price"]].to_pickle(semt_log_average_directory) 
+
+try:
+    if len(sampled_dict_of_pairs) > len(np.load(output_directory + "\\sampled_dict_of_pairs_for_semt_log_average_difference.npy",allow_pickle='TRUE').item()):
+        np.save(output_directory + "\\sampled_dict_of_pairs_for_semt_log_average_difference.npy",sampled_dict_of_pairs)
+except FileNotFoundError:
+    np.save(output_directory + "\\sampled_dict_of_pairs_for_semt_log_average_difference.npy",sampled_dict_of_pairs)
+
 end_preprocessing = time.time()
-print("we missed " + count +" data")
+print("we missed " + str(count) +" data")
 print("preprocessing took "+str(end_preprocessing - start_preprocessing) + " seconds")            
             
 
 
+
+          

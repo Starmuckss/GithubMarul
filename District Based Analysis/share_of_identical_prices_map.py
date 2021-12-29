@@ -12,8 +12,12 @@ import mapclassify
 import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-input_directory = dir_path + "\\semt_Share_of_identical_prices" # Preprocessed data will be recorded here
-output_directory = dir_path + "\\Share_of_identical_prices_maps" # Output Data will be saved in here
+input_directory = dir_path + "\\data\\semt_Share_of_identical_prices" # Preprocessed data will be recorded here
+output_directory = dir_path + "\\output\\Share_of_identical_prices_maps" # Output Data will be saved in here
+
+if not os.path.exists( dir_path + "\\output"): # create the folder if not exists already
+    os.mkdir( dir_path + "\\output")
+    
 if not os.path.exists(output_directory): # create the folder if not exists already
     os.mkdir(output_directory)
 categories = pd.read_excel("categories.xlsx")
@@ -34,7 +38,12 @@ istanbul_map["district"] = istanbul_map["district"].apply(lambda x:x.lower().cap
 istanbul_map['coords'] = istanbul_map['geometry'].apply(lambda x: x.centroid.coords[:])
 istanbul_map['coords'] = [coords[0] for coords in istanbul_map['coords']] # Generate coordinates of districts
 for category in category_list:
-    data = pd.read_pickle(input_directory+"//"+category +"_"+"semt_share_of_identical_prices.pkl") # Import correlation data here
+    
+    if os.path.exists(input_directory+"//"+category +"_"+"semt_share_of_identical_prices.pkl"):
+        data = pd.read_pickle(input_directory+"//"+category +"_"+"semt_share_of_identical_prices.pkl") # Import identical price data here
+    else:
+        continue
+    
     try:
         data.drop(["Name","Code"],axis =1,inplace=True)
     except KeyError:
@@ -63,8 +72,14 @@ for category in category_list:
             plt.text(s=f'{hue:,}', x=row['coords'][0],y = row['coords'][1] - 0.01 ,
             horizontalalignment='center', fontdict = {'size': 5})
         
-        merged.plot(ax=ax,column='shared_indentical_price', legend=True)
+        merged.plot(ax=ax,column='shared_indentical_price', legend=True,cmap = "Blues" ,missing_kwds={
+        "color": "gray",
+        "label": "Missing values",
+    })
+        plt.axis('off')
+
         fig.savefig(output_directory+"\\"+category,dpi=600)
+        fig.clf()
     except Exception as e:
         print(e)
         continue

@@ -13,13 +13,11 @@ from collections import defaultdict
 root_directory = "C:\\Users\\HP\\Desktop\\11" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
-output_directory = dir_path+"\\semt_log_average_abs_difference" # Data will be printed out here
+output_directory = dir_path+"\\data\\semt_log_average_abs_difference" # Data will be printed out here
 if not os.path.exists(output_directory): # create the folder if not exists already
     os.mkdir(output_directory)
 
-input_directory =dir_path + "\\pre_semt_log_average_difference" # Preprocessed data will be recorded here
-if not os.path.exists(input_directory): # create the folder if not exists already
-    os.mkdir(input_directory) 
+input_directory =dir_path + "\\data\\pre_semt_log_average_difference" # Preprocessed data will be recorded here
 
 categories = pd.read_excel("categories.xlsx")
 category_list = list(categories.category)
@@ -38,7 +36,7 @@ for category in category_select:
             # chain_name1 = pos_name1.split("-")[0] # returns cagdas
         
             pos_name2 = pair[1][pair[1].find(dates[0]) + len(dates[0])+1: pair[1].find(category)-1]
-            chain_name2 = pos_name2.split("-")[0]
+            #chain_name2 = pos_name2.split("-")[0]
         
         # since we already calculated averages, we read the data directly and start merging both pos in the pair
             try:    
@@ -96,6 +94,7 @@ for category in category_select:
             
     try:
         category_df[["Name","Code"]+list(district_data_list.keys())].to_pickle(output_directory + "\\" + category + "_semt.pkl" )  # report as csv ex: deodorant-parfum_between.csv
+        
     except KeyError:
        continue
     end_category = time.time()

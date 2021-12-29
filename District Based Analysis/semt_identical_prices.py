@@ -15,12 +15,13 @@ from itertools import combinations
 root_directory = "C:\\Users\\HP\\Desktop\\11" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
-output_directory = dir_path + "\\" + "semt_Share_of_identical_prices" # Data will be printed out here.
+output_directory = dir_path + "\\" + "data\\semt_Share_of_identical_prices" # Data will be printed out here.
 
 if not os.path.exists(output_directory):
     os.mkdir(output_directory)
 
-input_directory = dir_path + "\\pre_semt_correlation"  # Correlation and Share of identical prices both use the same data
+
+input_directory = dir_path + "\\data\\pre_semt_correlation"  # Correlation and Share of identical prices both use the same data
 
 sampled_dict_of_pairs = np.load(input_directory + "\\sampled_dict_of_pairs_for_correlation.npy",allow_pickle='TRUE').item()    
    

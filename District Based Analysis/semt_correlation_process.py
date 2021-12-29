@@ -13,11 +13,11 @@ from collections import defaultdict
 root_directory = "C:\\Users\\HP\\Desktop\\11" # root directory contains everything
 dates = os.listdir(root_directory) # Assumed date files are directly under root directory
 dir_path = os.path.dirname(os.path.realpath(__file__))
-output_directory = dir_path+"\\semt_correlation" # Data will be printed out here
+output_directory = dir_path+"\\data\\semt_correlation" # Data will be printed out here
 if not os.path.exists(output_directory): # create the folder if not exists already
     os.mkdir(output_directory)
     
-input_directory = dir_path + "\\pre_semt_correlation" # Preprocessed data will be recorded here
+input_directory = dir_path + "\\data\\pre_semt_correlation" # Preprocessed data will be recorded here
 
 categories = pd.read_excel("categories.xlsx")
 category_list = list(categories.category)
@@ -79,22 +79,28 @@ for category in sampled_dict_of_pairs:
             #print(end-start)
     
     
-    
-        pair_columns = category_results[district].columns.copy()    
-        pair_columns = pair_columns.drop(["Name","Code"])
-        
-        # statistics.mean() function failed. So I first summed the correlations that are not NaNs. Then I find the pair_count
-        # The pair count is the count of not NaN values in correlation data. Then I calculated sum / pair_count
-        # The products that have NaN correlation for all pairs will have sum = 0 and pair count = 0. Since 0/0 is NaN, we have what we want in the end.
-        category_results[district]["Sum"] = [sum(v[pd.notna(v)].tolist()) for v in category_results[district][pair_columns].values]    
-        category_results[district]["pair_count"] = [len(v[pd.notna(v)].tolist()) for v in category_results[district][pair_columns].values]
-        category_results[district]["Mean_correlation"] = category_results[district]["Sum"] /category_results[district]["pair_count"]  
-        #category_results[district][["Name","Code","Mean_correlation","pair_count"]].to_csv(output_directory+"\\"+"correlation_"+district+"_"+category+".csv")
+        try:
+            pair_columns = category_results[district].columns.copy()    
+            pair_columns = pair_columns.drop(["Name","Code"])
+            
+            # statistics.mean() function failed. So I first summed the correlations that are not NaNs. Then I find the pair_count
+            # The pair count is the count of not NaN values in correlation data. Then I calculated sum / pair_count
+            # The products that have NaN correlation for all pairs will have sum = 0 and pair count = 0. Since 0/0 is NaN, we have what we want in the end.
+            category_results[district]["Sum"] = [sum(v[pd.notna(v)].tolist()) for v in category_results[district][pair_columns].values]    
+            category_results[district]["pair_count"] = [len(v[pd.notna(v)].tolist()) for v in category_results[district][pair_columns].values]
+            category_results[district]["Mean_correlation"] = category_results[district]["Sum"] /category_results[district]["pair_count"]  
+            #category_results[district][["Name","Code","Mean_correlation","pair_count"]].to_csv(output_directory+"\\"+"correlation_"+district+"_"+category+".csv")
+        except KeyError:
+            continue
     results[category] = category_results    
-            
-            
-            
-            
-            
-            
-            
+
+for category in sampled_dict_of_pairs:
+    mean_of_mean_correlation = list()            
+
+    for district in results[category]:          
+        if len(results[category][district]) > 0:
+            avg = (district,results[category][district]["Mean_correlation"].mean())
+            mean_of_mean_correlation.append(avg)            
+    df = pd.DataFrame(data = mean_of_mean_correlation,columns = ["district","correlation_for_district"])        
+    df.to_pickle(output_directory+"\\"+"correlation_"+category+".pkl")        
+             
