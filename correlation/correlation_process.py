@@ -134,8 +134,6 @@ class correlation_process():
                     within_pair_columns = within_results[category][chain].columns.copy()    
                     within_pair_columns = within_pair_columns.drop(["Name","Code"])
                     
-                    
-                    
                     # statistics.mean() function failed. So I first summed the correlations that are not NaNs. Then I find the pair_count
                     # The pair count is the count of not NaN values in correlation data. Then I calculated sum / pair_count
                     # The products that have NaN correlation for all pairs will have sum = 0 and pair count = 0. Since 0/0 is NaN, we have what we want in the end.

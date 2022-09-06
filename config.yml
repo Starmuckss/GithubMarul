@@ -1,0 +1,8 @@
+
+root_directory: "D:"
+
+preprocess_data_directory: "D:\\Marul\\preprocess_data"  # Preprocess data output location
+
+result_directory: "D:\\Marul\\results" # Metric results location
+
+visuals_directory : "D:\\Marul\\visuals" # Visuals (Histograms, plots, maps will be outputted here)

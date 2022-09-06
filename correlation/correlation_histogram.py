@@ -75,7 +75,7 @@ class correlation_histogram():
     
     def create_histograms(self,dpi = 200):
     
-        chain_dictionary = self.markets(self.root_directory)
+        chain_dictionary = self.markets(self.data_directory)
         
         full_within = pd.Series()
         full_between = pd.Series()
