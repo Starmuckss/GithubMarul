@@ -12,7 +12,6 @@ import numpy as np
 from collections import defaultdict
 
 
-
 class correlation_process():
     def __init__(self,data_directory,year,month,input_directory,output_directory,category_list):
     
